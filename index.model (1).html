@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solow Growth Model</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f4f6f8;--panel:#fff;--ink:#1c2733;--mute:#5f6e7d;--line:#d9e0e6;--navy:#1f3a5f;--green:#1b7f6b;--red:#c2532f;--blue:#2f5fb3}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;line-height:1.55}
+header{background:var(--navy);color:#fff;padding:18px 20px}
+.wrap{max-width:1040px;margin:0 auto}
+header .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-end}
+h1{margin:0;font-size:1.4rem;font-weight:600}
+.ident{display:flex;flex-wrap:wrap;gap:10px}
+.ident label{display:block;font-size:.8rem;opacity:.85;margin-bottom:2px}
+.ident input{font:inherit;padding:6px 9px;border:1px solid transparent;border-radius:5px;width:210px;max-width:100%}
+main{max-width:1040px;margin:0 auto;padding:20px 16px 40px;display:grid;gap:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px}
+h2{margin:0 0 10px;font-size:1.1rem}
+.formula{font-family:"Cambria Math",Georgia,serif;font-size:1.15rem;margin:6px 0 10px}
+.desc{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px}
+.desc p{margin:0}
+.up{color:var(--green);font-weight:600}.down{color:var(--red);font-weight:600}
+.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.params label{display:block;font-size:.88rem;color:var(--mute)}
+.params input{width:100%;font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:5px;margin-top:3px}
+.msg{margin:10px 0 0;font-size:.9rem;color:var(--red);min-height:1.3em}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.res{border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.res small{display:block;color:var(--mute)}
+.res b{font-size:1.6rem;font-variant-numeric:tabular-nums}
+.change{margin-top:12px;padding:10px 14px;border-radius:6px;background:#eaf4f1;border:1px solid #b9dcd3}
+.status{color:var(--mute);font-size:.92rem}
+.chart{position:relative;height:430px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+button{font:inherit;cursor:pointer;border:0;border-radius:6px;padding:9px 16px;background:var(--navy);color:#fff}
+button.alt{background:#e7ecf1;color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.92rem}
+th,td{text-align:right;padding:5px 10px;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header>
+ <div class="wrap">
+  <h1>Solow Growth Model</h1>
+  <div class="ident">
+   <div><label for="nm">Name-Surname</label><input id="nm" type="text" placeholder="Name Surname" autocomplete="off"></div>
+   <div><label for="sid">Student ID</label><input id="sid" type="text" inputmode="numeric" placeholder="Student ID" autocomplete="off"></div>
+  </div>
+ </div>
+</header>
+
+<main>
+ <section class="panel">
+  <h2>About the model</h2>
+  <div class="formula">Y = A√K &nbsp;&nbsp; I = sY &nbsp;&nbsp; D = δK &nbsp;&nbsp; ΔK = sY − δK</div>
+  <p style="margin:0"><b>Y = A√K</b> says that output Y is produced from capital K and technology A. Because of the square root, each extra unit of capital adds less output than the previous one (diminishing returns). Capital increases when investment sY is larger than depreciation δK, and decreases when it is smaller. The economy settles at the steady state K*, where sY = δK.</p>
+  <div class="desc">
+   <p><b>s: savings rate.</b> The share of output that is saved and invested. A higher s raises investment, so capital <span class="up">increases</span> and K* is higher.</p>
+   <p><b>δ: depreciation rate.</b> The share of capital that wears out each period. A higher δ raises depreciation, so capital <span class="down">decreases</span> and K* is lower.</p>
+   <p><b>A: technology level.</b> Output produced per unit of √K. A higher A raises output and investment, so capital <span class="up">increases</span> and K* and Y* are higher.</p>
+  </div>
+ </section>
+
+ <section class="panel">
+  <h2>Parameters</h2>
+  <div class="params">
+   <label for="s">Savings rate, s (0 to 1)<input id="s" type="number" step="0.01" min="0" max="1" value="0.3"></label>
+   <label for="d">Depreciation rate, δ (above 0, up to 1)<input id="d" type="number" step="0.005" min="0.001" max="1" value="0.02"></label>
+   <label for="A">Technology level, A<input id="A" type="number" step="0.1" min="0.1" value="2.6"></label>
+  </div>
+  <p class="msg" id="msg" role="alert"></p>
+ </section>
+
+ <section class="panel">
+  <h2>Steady state results</h2>
+  <p class="status" id="who" style="margin-top:0"></p>
+  <div class="results">
+   <div class="res"><small>Capital, K*</small><b id="rK"></b></div>
+   <div class="res"><small>Output, Y*</small><b id="rY"></b></div>
+   <div class="res"><small>Consumption, C*</small><b id="rC"></b></div>
+  </div>
+  <div class="change" id="chg" hidden></div>
+  <p class="status" style="margin-bottom:0">K* = (sA/δ)² &nbsp; Y* = A√K* = sA²/δ &nbsp; C* = (1 − s)Y*</p>
+ </section>
+
+ <section class="panel">
+  <h2>Production, investment and depreciation</h2>
+  <div class="bar">
+   <button id="scen">Digital Economy Scenario: Thailand adopts AI (A +20%)</button>
+   <button id="back" class="alt" hidden>Reset A to baseline</button>
+   <span class="status" id="stat"></span>
+  </div>
+  <div class="chart"><canvas id="chart" role="img" aria-label="Y, sY and δK against capital K with the steady state marked"></canvas></div>
+ </section>
+
+ <section class="panel">
+  <h2>Values by capital level</h2>
+  <div class="tbl"><table>
+   <thead><tr><th>K</th><th>Y = A√K</th><th>sY</th><th>δK</th></tr></thead>
+   <tbody id="tb"></tbody>
+  </table></div>
+ </section>
+</main>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var baseA=null, chart=null;                       // baseA is set only while the scenario is active
+  var f3=function(x){return x.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})};
+
+  // Required model: Y = A*sqrt(K), I = sY, D = deltaK
+  function steady(A,s,d){
+    var K=Math.pow(s*A/d,2);          // K* = (sA/delta)^2
+    var Y=A*Math.sqrt(K);             // Y* = A*sqrt(K*) = sA^2/delta
+    return {K:K,Y:Y,C:(1-s)*Y};       // C* = (1-s)Y*
+  }
+
+  function update(){
+    var nm=$('nm').value.trim(), id=$('sid').value.trim();
+    $('who').textContent=(nm||id)?('Student: '+(nm||'-')+'  |  ID: '+(id||'-')):'';
+
+    var s=parseFloat($('s').value), d=parseFloat($('d').value), A=parseFloat($('A').value);
+    if(!(s>=0&&s<=1)||!(d>0&&d<=1)||!(A>0)){
+      $('msg').textContent='Enter s between 0 and 1, δ above 0 and up to 1, and A above 0.';
+      return;
+    }
+    $('msg').textContent='';
+
+    var cur=steady(A,s,d);
+    $('rK').textContent=f3(cur.K); $('rY').textContent=f3(cur.Y); $('rC').textContent=f3(cur.C);
+
+    var scen=baseA!==null, base=scen?steady(baseA,s,d):null;
+    $('scen').hidden=scen; $('back').hidden=!scen;
+    $('chg').hidden=!scen;
+    if(scen){
+      var pc=function(a,b){return '+'+f3(b-a)+' (+'+((b-a)/a*100).toFixed(3)+'%)'};
+      $('chg').innerHTML='<b>Digital Economy Scenario:</b> A rose by 20% from '+baseA.toFixed(3)+' to '+A.toFixed(3)+'.'+
+        '<br>Y* changed from <b>'+f3(base.Y)+'</b> to <b>'+f3(cur.Y)+'</b>, a change of <b>'+pc(base.Y,cur.Y)+'</b>.'+
+        '<br>K* changed from '+f3(base.K)+' to '+f3(cur.K)+' ('+pc(base.K,cur.K)+').'+
+        '<br>C* changed from '+f3(base.C)+' to '+f3(cur.C)+' ('+pc(base.C,cur.C)+').';
+      $('stat').textContent='Brown dashed = Y before, blue solid = Y after.';
+    }else $('stat').textContent='';
+
+    // table K = 0, 200, ..., 2000
+    var rows='';
+    for(var k=0;k<=2000;k+=200){var y=A*Math.sqrt(k);
+      rows+='<tr><td>'+k.toLocaleString('en-US')+'</td><td>'+f3(y)+'</td><td>'+f3(s*y)+'</td><td>'+f3(d*k)+'</td></tr>';}
+    $('tb').innerHTML=rows;
+
+    // chart data
+    var Kmax=Math.max(cur.K,scen?base.K:0,1)*1.6, N=120, Y=[],I=[],D=[],Y0=[],I0=[];
+    for(var i=0;i<=N;i++){
+      var K=Kmax*i/N, y2=A*Math.sqrt(K);
+      Y.push({x:K,y:y2}); I.push({x:K,y:s*y2}); D.push({x:K,y:d*K});
+      if(scen){var y0=baseA*Math.sqrt(K);Y0.push({x:K,y:y0});I0.push({x:K,y:s*y0});}
+    }
+    var line=function(label,data,color,extra){return Object.assign({label:label,data:data,borderColor:color,borderWidth:2.5,pointRadius:0,tension:0},extra||{})};
+    var sets=[line(scen?'Y AFTER (A = '+A.toFixed(2)+')':'Production Y = A√K',Y,'#2f5fb3',{borderWidth:3.5}),
+              line(scen?'sY after':'Investment sY',I,'#1b7f6b'),line('Depreciation δK',D,'#c2532f')];
+    if(scen){
+      sets.push(line('Y BEFORE (A = '+baseA.toFixed(2)+')',Y0,'#8a5a00',{borderDash:[10,6],borderWidth:3.5}));
+      sets.push(line('sY before',I0,'#9aa7b3',{borderDash:[10,6],borderWidth:2}));
+      sets.push({type:'scatter',label:'Steady state before: K* = '+f3(base.K)+', Y* = '+f3(base.Y),
+        data:[{x:base.K,y:base.Y}],backgroundColor:'#fff',borderColor:'#8a5a00',borderWidth:3,pointRadius:8,pointStyle:'rectRot'});
+    }
+    sets.push(line('Steady-state line',[{x:cur.K,y:0},{x:cur.K,y:cur.Y}],'#1c2733',{borderDash:[4,4],borderWidth:1.5}));
+    sets.push({type:'scatter',label:'Steady state: K* = '+f3(cur.K)+', sY* = D* = '+f3(s*cur.Y),
+      data:[{x:cur.K,y:s*cur.Y}],backgroundColor:'#f5b800',borderColor:'#1c2733',borderWidth:3,pointRadius:11,pointHoverRadius:13});
+    sets.push({type:'scatter',label:'Y* = '+f3(cur.Y),data:[{x:cur.K,y:cur.Y}],
+      backgroundColor:'#f5b800',borderColor:'#1c2733',borderWidth:2,pointRadius:7});
+
+    if(!chart){
+      chart=new Chart($('chart'),{type:'line',data:{datasets:sets},options:{
+        responsive:true,maintainAspectRatio:false,parsing:false,animation:{duration:300},
+        interaction:{mode:'nearest',intersect:false},
+        scales:{x:{type:'linear',min:0,title:{display:true,text:'Capital K'}},y:{beginAtZero:true,title:{display:true,text:'Y, sY, δK'}}},
+        plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:function(c){return c.dataset.label.split(':')[0]+': ('+c.parsed.x.toFixed(1)+', '+c.parsed.y.toFixed(3)+')'}}}}
+      }});
+    }else{chart.data.datasets=sets;chart.update();}
+  }
+
+  ['nm','sid','s','d'].forEach(function(id){$(id).addEventListener('input',update)});
+  $('A').addEventListener('input',function(){baseA=null;update()});   // manual edit of A ends the scenario
+  $('scen').onclick=function(){
+    var A=parseFloat($('A').value); if(!(A>0))return;
+    baseA=A; $('A').value=+(A*1.2).toFixed(6); update();
+  };
+  $('back').onclick=function(){$('A').value=baseA;baseA=null;update()};
+  update();
+})();
+</script>
+</body>
+</html>
